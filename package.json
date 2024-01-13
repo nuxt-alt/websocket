@@ -1,0 +1,69 @@
+{
+    "name": "@nuxt-alt/websocket",
+    "version": "0.0.1",
+    "description": "Socket.io WebSocket module for Nuxt",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/nuxt-alt/websocket.git"
+    },
+    "license": "MIT",
+    "type": "module",
+    "keywords": [
+        "websocket",
+        "nuxt",
+        "nuxt3",
+        "nuxtjs",
+        "nuxt-module",
+        "nuxt-plugin",
+        "socket.io",
+        "@nuxt-alt/websocket"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/types/index.d.ts",
+            "import": "./dist/module.mjs",
+            "require": "./dist/module.cjs"
+        }
+    },
+    "main": "./dist/module.cjs",
+    "types": "./dist/types/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "dev:prepare": "JITI_ESM_RESOLVE=1 jiti ./commands/cli.ts build --stub && JITI_ESM_RESOLVE=1 jiti ./commands/cli.ts prepare",
+        "prepack": "JITI_ESM_RESOLVE=1 jiti ./commands/cli.ts build",
+        "dev": "nuxi dev playground",
+        "dev:build": "nuxi build playground",
+        "dev:preview": "nuxi preview playground",
+        "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+        "lint": "eslint .",
+        "test": "vitest run",
+        "test:watch": "vitest watch"
+    },
+    "dependencies": {
+        "@nuxt-alt/proxy": "^2.5.5",
+        "@nuxt/kit": "^3.9.1",
+        "@refactorjs/serialize": "^1.0.7",
+        "defu": "^6.1.4",
+        "socket.io": "^4.7.4",
+        "socket.io-client": "^4.7.4"
+    },
+    "devDependencies": {
+        "@nuxt/devtools": "latest",
+        "@nuxt/eslint-config": "^0.2.0",
+        "@nuxt/schema": "^3.9.1",
+        "@nuxt/test-utils": "^3.9.0",
+        "@types/node": "^20.10.6",
+        "changelogen": "^0.5.5",
+        "eslint": "^8.56.0",
+        "jiti": "^1.21.0",
+        "nuxt": "^3.9.1",
+        "unbuild": "^2.0.0",
+        "vitest": "^1.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "packageManager": "yarn@4.0.2"
+}
