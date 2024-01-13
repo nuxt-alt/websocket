@@ -48,12 +48,6 @@ interface WebSocketOpts {
 // lazy require only when websocket is used
 const websockets: Record<string, [WebSocketOpts]> = {}
 
-declare global {
-    var $io: {
-        [key: string]: Server
-    }
-}
-
 Object.keys(options.websockets!).forEach(async (context) => {
     let opts = initializeOpts(options.websockets![context]);
 

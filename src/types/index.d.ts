@@ -44,6 +44,25 @@ interface WebSocketOpts {
     serverOptions?: Omit<Partial<ServerOptions>, 'path'>
 }
 
+declare global {
+    /**
+     * socket.io variable namespace. Can only be used in a nitro context
+     */
+    var $io: {
+        [key: string]: Server
+    }
+    namespace NodeJS {
+        interface Global {
+            /**
+             * socket.io variable namespace. Can only be used in a nitro context
+             */
+            $io: {
+                [key: string]: Server
+            }
+        }
+    }
+}
+
 declare module '#app' {
     interface NuxtApp {
         $io: typeof import('socket.io-client')['io']
@@ -56,16 +75,6 @@ declare module '@nuxt/schema' {
     }
     interface NuxtOptions {
         ['websocket']?: ModuleOptions
-    }
-}
-
-declare global {
-    namespace NodeJS {
-        interface Global {
-            $io: {
-                [key: string]: Server
-            }
-        }
     }
 }
 
