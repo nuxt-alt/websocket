@@ -117,3 +117,11 @@ export default defineNuxtConfig({
     }
 })
 ```
+
+## Composables
+
+A `useIO` composable is avaialble to use otherwise you can use `$io` from `useNuxtApp()` or import the io module from `socket.io-client` directly.
+
+## Known Issues
+
+- Polling will not work with the module (sometimes, its really finicky in nitro). By default all socket.io instances in nitro uses websockets without polling. if you'd like to take a crack at handling this yourself you can disable the handler of your socket.io instance. This will disable the event handler for the websockt path and if there's no handler it will lead to 404s (doesn't happen all the time but it happens enough times to have it disabled). You can also disable it if you end up wanting to use the proxy module to handle proxying the request.
