@@ -1,6 +1,6 @@
-import { type NitroRuntimeConfig } from 'nitropack'
 import type { ModuleOptions } from './types'
-import { defineNuxtModule, addPlugin, createResolver, addImports, installModule } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImports, addTypeTemplate, installModule } from '@nuxt/kit'
+import { type NitroRuntimeConfig } from 'nitropack'
 import { name, version } from '../package.json'
 import { serialize } from '@refactorjs/serialize'
 import { Server } from 'socket.io'
@@ -34,17 +34,25 @@ export default defineNuxtModule<ModuleOptions>({
                 for (const context in moduleConfig.websockets) {
                     const websocket = moduleConfig.websockets[context]
                     const io = new Server(server, { transports: ['websocket'], ...websocket?.serverOptions, path: context });
-    
+
                     sockets[websocket!.name] = io;
 
                     if (websocket?.events) {
-                        Object.keys(websocket.events).forEach((fn) => {
-                            websocket.events?.[fn]?.(io, useRuntimeConfig() as NitroRuntimeConfig)
+                        Object.keys(websocket.events).forEach(async (fn) => {
+                            websocket.events?.[fn]?.(io, nuxt.options.runtimeConfig as NitroRuntimeConfig)
                         })
                     }
                 }
             })
         }
+
+        if (moduleConfig?.websockets && !nuxt.options.dev) {
+            addTypeTemplate({
+                filename: 'types/nitro-websocket-hooks.d.ts',
+                getContents: () => runtimeHookTypes(moduleConfig)
+            })
+        }
+
 
         if (!nuxt.options.modules.includes('@nuxt-alt/proxy')) {
             installModule('@nuxt-alt/proxy', {
@@ -75,3 +83,16 @@ export default defineNuxtModule<ModuleOptions>({
         })
     }
 })
+
+function runtimeHookTypes(moduleConfig: ModuleOptions) {
+    return `import { Server } from 'socket.io'
+
+declare module 'nitropack' {
+    interface NitroRuntimeHooks {
+        ${Object.values(moduleConfig.websockets!).map((websocket) => {
+        return `'io:${websocket?.name}': (io: Server) => void`
+    }).join('\n')}
+    }
+}
+`
+}

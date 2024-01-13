@@ -1,6 +1,3 @@
-import { eventHandler } from 'h3'
-import { ServerResponse, Server as HttpServer } from 'node:http'
-import { Server as SecureHttpServer } from 'node:https'
 import { type NitroAppPlugin, type NitroRuntimeConfig } from 'nitropack'
 import { isWebSocketUpgradeRequest, upgradeWebSocket } from './utils'
 import { Server, type ServerOptions } from 'socket.io'
@@ -56,19 +53,20 @@ Object.keys(options.websockets!).forEach(async (context) => {
     websockets[context] = [{ ...opts }]
 })
 
-export default <NitroAppPlugin>function ({ hooks, h3App }) {
-    if (process.env.NODE_ENV === 'production') {
-        hooks.hook('listen:node', (server: HttpServer | SecureHttpServer) => {
-            // Initialize the global io map if it is not already
-            if (!globalThis.$io) {
-                globalThis.$io = {};
-            }
+// Initialize the global io map if it is not already
+if (!globalThis.$io) {
+    globalThis.$io = {};
+}
 
+export default <NitroAppPlugin>function ({ hooks }) {
+    if (process.env.NODE_ENV === 'production') {
+        hooks.hook('listen:node', (server) => {
             for (const context in websockets) {
                 const [websocket] = websockets[context]
                 const io = new Server(server, { transports: ['websocket'], ...websocket.serverOptions, path: context });
-
                 globalThis.$io[websocket.name] = io;
+                // @ts-ignore: types added automatically
+                hooks.callHook(`io:${websocket.name}`, io)
 
                 if (websocket.events) {
                     Object.keys(websocket.events).forEach((fn) => {
@@ -79,22 +77,19 @@ export default <NitroAppPlugin>function ({ hooks, h3App }) {
         })
     }
 
-    h3App.stack.unshift({
-        route: '/',
-        handler: eventHandler(async (event) => {
-            const url = event.node.req.url!
+    hooks.hook('request', async (event) => {
+        const url = event.node.req.url!
 
-            for (const context in websockets) {
-                const [websocket] = websockets[context]
-                if (doesProxyContextMatchUrl(context, url) && websocket.handler) {
-                    if (isWebSocketUpgradeRequest(event)) {
-                        return upgradeWebSocket(event);
-                    }
-
-                    return new ServerResponse(event.node.req)
+        for (const context in websockets) {
+            const [websocket] = websockets[context]
+            if (doesProxyContextMatchUrl(context, url) && websocket.handler) {
+                if (isWebSocketUpgradeRequest(event)) {
+                    upgradeWebSocket(event);
                 }
+
+                event.node.res.end()
             }
-        })
+        }
     })
 }
 
